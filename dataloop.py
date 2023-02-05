@@ -58,12 +58,12 @@ class DataLoop:
     def filter_data(self):
         # Create a query that selects only image items that have been labeled as class1
         # and print the item name and item id of each item
-        # filters = dl.Filters(resource=dl.FiltersResource.ANNOTATION)
-        # filters.add(field='label', values='class1')
-        # pages = self.dataset.annotations.list(filters=filters)
-        # for page in pages:
-        #     for annotation in page:
-        #         annotation.print()
+        filters = dl.Filters(resource=dl.FiltersResource.ANNOTATION)
+        filters.add(field='label', values='class1')
+        pages = self.dataset.annotations.list(filters=filters)
+        for page in pages:
+            for annotation in page:
+                annotation.print()
 
         # Create a query that retrieves all point annotations from the dataset and prints the
         # item name and item id of each item, and for each item, print for each annotation
