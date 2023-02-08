@@ -9,9 +9,9 @@ class DataLoop:
         self.dataset = project.datasets.get(dataset_name='Cars')
 
     def login(self):
-        dl.login_m2m(email="bot.d89e4758-d0f8-4bc4-b0df-adbb41972a7d@bot.dataloop.ai", password="xxxxxxx")
+        dl.login_m2m(email="bot.175aa789-39e0-4365-bd44-e86720ad736d@bot.dataloop.ai", password="92h#0@!5Tb65izfG9")
 
-    def annotate_item(self,item_id,label,attributes=[]):
+    def annotate_item(self,item_id,labels=[],attributes=[],type="classification",template_id=None):
         """
         Applies classification label to item
         :param item: item id
@@ -20,7 +20,11 @@ class DataLoop:
         """
         item_obj = self.dataset.items.get(item_id=item_id)
         builder = item_obj.annotations.builder()
-        builder.add(annotation_definition=dl.Classification(label=label,attributes=attributes))
+        for label in labels:
+            if type == "classification":
+                builder.add(annotation_definition=dl.Classification(label=label,attributes=attributes))
+            else:
+                builder.add(annotation_definition=dl.Pose(label=label, template_id=template_id))
         item_obj.annotations.upload(builder)
 
 
@@ -30,30 +34,27 @@ class DataLoop:
         self.dataset.add_labels([
             {"label_name":'class1'},
             {"label_name":'class2'},
-            {"label_name":'key',"attributes":["key1","key2","key3","key4","key5"]},
+            {"label_name":'key'},
         ])
 
         # c. upload directory with five images (Single upload to all items in the
         # directory)
-        self.dataset.items.upload(local_path="/Users/sahilthakkar/PycharmProjects/HelperScripts/racing-cars/", remote_path="/sdk-uploads/")
-
         # d. Add a UTM metadata to an item user metadata - collection time
         # Note: Have made an assumption here that UTM would be UTC here
-        item1 = self.dataset.items.get(item_id='63dfa1a0ed3655175f3d7759')
-        item1.metadata['user'] = dict()
-        item1.metadata['user']['collected'] = time.time()
-        item1.update()
+        self.dataset.items.upload(local_path="./racing-cars/", remote_path="/sdk-uploads/", item_metadata={"collected":time.time()})
 
         # e. Add a classification of class1 to the first two of the images you uploaded.
         # f. Add a classification of class2 to the rest of the images you uploaded.
-        self.annotate_item("63dfa1a0ed3655175f3d7759","class1")
-        self.annotate_item("63dfa1a047a4833d7ea97d99","class1")
-        self.annotate_item("63dfa1a041307c86319bd45a","class2")
-        self.annotate_item("63dfa1a01632906c1a121d62","class2")
-        self.annotate_item("63dfa1a00bb943021549e2f5","class2")
+        self.annotate_item("63dfa1a0ed3655175f3d7759",["class1"])
+        self.annotate_item("63dfa1a047a4833d7ea97d99",["class1"])
+        self.annotate_item("63dfa1a041307c86319bd45a",["class2"])
+        self.annotate_item("63dfa1a01632906c1a121d62",["class2"])
+        self.annotate_item("63dfa1a00bb943021549e2f5",["class2"])
 
         # g. Add five random key points with the label “key” to one item.
-        self.annotate_item("63dfa1a047a4833d7ea97d99","key",["key1","key2","key3","key4","key5"])
+        recipe = self.dataset.recipes.get(recipe_id='63df83d5a2836593c9b839e2')
+        template_id = recipe.get_annotation_template_id(template_name="Key Annotation")
+        self.annotate_item("63e3c69774e98c27f876df54",["key"],type="pose",template_id=template_id)
 
     def filter_data(self):
         # Create a query that selects only image items that have been labeled as class1
@@ -62,8 +63,8 @@ class DataLoop:
         filters.add(field='label', values='class1')
         pages = self.dataset.annotations.list(filters=filters)
         for page in pages:
-            for annotation in page:
-                annotation.print()
+            for item in page:
+                item.print()
 
         # Create a query that retrieves all point annotations from the dataset and prints the
         # item name and item id of each item, and for each item, print for each annotation
